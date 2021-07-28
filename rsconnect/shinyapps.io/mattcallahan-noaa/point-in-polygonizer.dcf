@@ -1,0 +1,13 @@
+name: point-in-polygonizer
+title: point-in-polygonizer
+username:
+account: mattcallahan-noaa
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4431333
+bundleId: 4862829
+url: https://mattcallahan-noaa.shinyapps.io/point-in-polygonizer/
+when: 1627445364.07307
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app draft and backup.R|practice_coords.csv|README.md|test.csv
