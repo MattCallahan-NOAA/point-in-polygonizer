@@ -99,3 +99,31 @@ ggplot() +
   geom_sf(data = df_in) +
   geom_sf(data = adfg,col="white",fill=NA)
 
+####Image rendering code
+
+
+# output$ESR_Map<-renderImage({
+#Map of ESR regions
+#   filename <- normalizePath(file.path('Figures/ESR.png'))
+# Return a list containing the filename and alt text
+#  list(src = filename)}, deleteFile = FALSE)
+#Map of LMEs
+output$LME_Map<-renderImage({
+  filename <- normalizePath(file.path('Figures/LME.png'))
+  list(src = filename)}, deleteFile = FALSE)
+#Map of NMFS areas
+output$NMFS_Map<-renderImage({
+  filename <- normalizePath(file.path('Figures/NMFS.png'))
+  list(src = filename)}, deleteFile = FALSE)
+#Map of ADFG areas
+output$ADFG_Map<-renderImage({
+  filename <- normalizePath(file.path('Figures/ADFG.png'))
+  list(src = filename)}, deleteFile = FALSE)
+#Map of BSIERP regions
+output$BSIERP_Map<-renderImage({
+  filename <- normalizePath(file.path('Figures/BSIERP.png'))
+  list(src = filename)}, deleteFile = FALSE)
+#Map of crab areas
+output$CRAB_Map<-renderImage({
+  filename <- normalizePath(file.path('Figures/CRAB.png'))
+  list(src = filename)}, deleteFile = FALSE)
