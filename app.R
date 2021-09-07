@@ -9,10 +9,17 @@ library(rgdal)
 ui <- fluidPage(
   
   titlePanel("point-in-polygonizer"),
-  tags$blockquote("This shiny app adds marine region information to point location data. No data will be stored or saved in any way when they are uploaded. 5mb limit."),
-  
+  tags$blockquote("This shiny app adds marine region information to point location data."),
   
   tabsetPanel(type="tabs",
+              tabPanel("README",
+                       tags$blockquote("This tool accepts latitude and longitude coordinates and adds the area type that points fall within."),
+                       tags$blockquote("No data are stored or saved in any way when they are uploaded."),
+                       tags$blockquote("The point in polygon operation uses a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
+                       tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
+                       tags$blockquote("There is a file size limit of 5mb."),
+                       tags$blockquote("We use the sf package in R for the point in polygon operation. See example code below. Full code can be found at https://github.com/MattCallahan-NOAA/point-in-polygonizer (app.R)."),
+                       verbatimTextOutput("text")),
               tabPanel("Ecosystem Subarea",  
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
@@ -30,9 +37,7 @@ ui <- fluidPage(
       downloadButton("ESR_DL","Download updated data"),
       tags$hr(),
       #text
-      tags$blockquote("This tool accepts latitude and longitude coordinates and adds selected area. Regions are calculated using a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
-      tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
-      ),
+      tags$blockquote("Ecosystem subregions used in the AFSC ecosystem status reports (ESR). The polygons used incorporate the 2021 GOA boundary changes (EGOA/WGOA boundary at longitude -147 and inside waters excluded).")),
     # Main panel for displaying outputs ----
     mainPanel(
       #map
@@ -54,8 +59,7 @@ ui <- fluidPage(
                downloadButton("LME_DL","Download updated data"),
                tags$hr(),
                tags$blockquote("THESE BOUNDARIES CURRENTLY INCLUDE INSIDE WATERS, BUT WILL BE UPDATED SOON"),
-               tags$blockquote("This tool accepts latitude and longitude coordinates and adds selected area. Regions are calculated using a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
-               tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
+               tags$blockquote("Large Marine Ecosystem boundaries used in the ecosystem status reports (ESR)"),
                tags$hr()),
              mainPanel(
                img(src='LME.png', align="left"),
@@ -74,8 +78,7 @@ ui <- fluidPage(
                tags$hr(),
                downloadButton("NMFS_DL","Download updated data"),
                tags$hr(),
-               tags$blockquote("This tool accepts latitude and longitude coordinates and adds selected area. Regions are calculated using a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
-               tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
+               tags$blockquote("NMFS management areas for Alaska"),
                tags$hr()),
              mainPanel(
                img(src='NMFS.png', align="left"),
@@ -93,8 +96,7 @@ ui <- fluidPage(
                tags$hr(),
                downloadButton("ADFG_DL","Download updated data"),
                tags$hr(),
-               tags$blockquote("This tool accepts latitude and longitude coordinates and adds selected area. Regions are calculated using a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
-               tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
+               tags$blockquote("Alaska Department of Fish and Game statistical areas"),
                tags$hr()),
              mainPanel(
                img(src='ADFG.png', align="left"),
@@ -111,9 +113,7 @@ ui <- fluidPage(
                                     ".csv")),
                tags$hr(),
                downloadButton("BSIERP_DL","Download updated data"),
-               tags$hr(),
-               tags$blockquote("This tool accepts latitude and longitude coordinates and adds selected area. Regions are calculated using a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
-               tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
+               tags$blockquote("Bering Sea Integrated Ecosystem Research Project regions. Region name and ID will be added."),
                tags$hr()),
              mainPanel(
                img(src='BSIERP.png', align="left"),
@@ -131,8 +131,7 @@ ui <- fluidPage(
                tags$hr(),
                downloadButton("CRAB_DL","Download updated data"),
                tags$hr(),
-               tags$blockquote("This tool accepts latitude and longitude coordinates and adds selected area. Regions are calculated using a PSMFC Alaska Marine Management Areas file geodatabase with the WGS 1984 coordinate system"),
-               tags$blockquote("Submit a csv with coordinates using the 'Browse' button. Coodinate fields must be titled 'latitude' and 'longitude' (lowercase), and the coordinate format must be in decimal degrees."),
+               tags$blockquote("Bristol Bay and St. Matthew crab management districts. This point in polygon operation currently uses shapefiles for each district rather than the Alaska Marine Management Areas file geodatabase used for the other regions. When the crab districts are added to the fgdb we will switch to using the fgdb for this process too."),
                tags$hr()),
              mainPanel(
                img(src='CRAB.png', align="left"),
@@ -143,6 +142,23 @@ ui <- fluidPage(
 
 # Define server logic to read selected file ----
 server <- function(input, output) {
+  output$text<-renderText({
+    paste("#Example code",
+          "library('sf')",
+          "library('tidyverse')",
+          "df <- read.csv(input$file1$datapath, header = TRUE)%>%",
+      "mutate(LAT=latitude, LON=longitude)",
+    "#  define as sf object and set a crs of WGS84",
+    "df = st_as_sf(df, coords = c('LON', 'LAT'), crs = 4326, agr = 'constant')", 
+    "#read in fgdb, automatically reads in the first layer (decimal degrees)",
+    "GDB <- st_read('Data/Alaska_Marine_Management_Areas.gdb')",
+    "#filter to regions, in this case ecosystem subareas",
+    "ESR <- GDB %>% filter(Area_Type=='Ecosystem Subarea')",
+    "#  Match the points to areas",
+    "df <- st_join(df, ESR, join = st_within)",
+    "#convert back to data frame",
+    "df <-df%>% data.frame", sep="\n")
+  })
     #ESR data
      data1<-reactive({
     #read in points
